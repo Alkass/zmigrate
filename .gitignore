@@ -1,0 +1,8 @@
+dist/
+*.egg-info/
+build/
+__pycache__/
+*.pyc
+
+# SQLite3 related files
+sqlite3.db

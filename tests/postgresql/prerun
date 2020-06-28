@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+sudo apt-get install -y libpq-dev
+
+docker run --name postgres --network host --restart=always -e POSTGRES_PASSWORD=postgres -d postgres
+
+sleep 10s

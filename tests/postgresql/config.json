@@ -1,0 +1,10 @@
+{
+	"driver": "postgres",
+	"seed": "yes",
+	"skip_missing": "no",
+	"user": "postgres",
+	"password": "postgres",
+	"host": "localhost",
+	"database": "db",
+	"migration_dir": "migration"
+}

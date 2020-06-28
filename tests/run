@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+for dir in ./*; do
+	if [ ! -d $dir ]; then
+		# Skip non-directories (e.g. this script)
+		continue
+	fi
+
+	echo "#################### Running $dir test cases ####################"
+
+	pushd $dir
+
+	if [ -e prerun ]; then
+		# Execute an optional prerun script
+		./prerun # > /dev/null 1>&1
+	fi
+
+	# Migrate
+	zmigrate -d up
+
+	# Downgrade
+	zmigrate -d down
+
+	# Migrate again
+	zmigrate
+
+	popd
+
+	echo "#################### Done with $dir ####################"
+done

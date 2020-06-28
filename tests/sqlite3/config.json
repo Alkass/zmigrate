@@ -1,0 +1,7 @@
+{
+	"migration_dir": "migration",
+	"seed": "yes",
+	"skip_missing": "no",
+	"driver": "sqlite3",
+	"database": "sqlite3.db"
+}
