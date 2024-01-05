@@ -30,7 +30,7 @@ Full tech stack [here](/techstack.md)
 # Tech Stack File
 ![](https://img.stackshare.io/repo.svg "repo") [Alkass/zmigrate](https://github.com/Alkass/zmigrate)![](https://img.stackshare.io/public_badge.svg "public")
 <br/><br/>
-|7<br/>Tools used|11/26/23 <br/>Report generated|
+|7<br/>Tools used|01/05/24 <br/>Report generated|
 |------|------|
 </div>
 
@@ -104,7 +104,7 @@ Full tech stack [here](/techstack.md)
 
 |NAME|VERSION|LAST UPDATED|LAST UPDATED BY|LICENSE|VULNERABILITIES|
 |:------|:------|:------|:------|:------|:------|
-|[psycopg2](https://pypi.org/psycopg2)|N/A|06/28/20|Fadi Hanna Al-Kass |BSD-3-Clause-Attribution|N/A|
+|[psycopg2](https://pypi.org/project/psycopg2)|N/A|06/28/20|Fadi Hanna Al-Kass |BSD-3-Clause-Attribution|N/A|
 
 <br/>
 <div align='center'>
