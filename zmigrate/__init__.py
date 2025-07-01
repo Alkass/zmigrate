@@ -13,7 +13,9 @@ from zmigrate.range import Range
 
 logger = logging.getLogger(__name__)
 
-def str_to_bool(v: str | bool) -> bool:
+from typing import Union  # moved here to avoid circular import
+
+def str_to_bool(v: Union[str, bool]) -> bool:
     if isinstance(v, bool):
         return v
     if v.lower() in ("yes", "y"):

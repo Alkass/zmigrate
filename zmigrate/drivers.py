@@ -1,6 +1,6 @@
 """Database driver implementations."""
 
-from typing import Any, Iterable, List
+from typing import Any, Iterable, List, Optional
 import importlib
 import subprocess
 import sys
@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def ensure_package(module: str, package: str | None = None):
+def ensure_package(module: str, package: Optional[str] = None):
     """Import ``module`` installing ``package`` via pip if needed."""
     try:  # pragma: no cover - normal case
         return importlib.import_module(module)
