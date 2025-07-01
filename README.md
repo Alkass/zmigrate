@@ -10,6 +10,9 @@ The Postgres driver requires ``libpq-dev`` and ``psycopg2``::
 
     apt-get install libpq-dev
 
+``zmigrate`` will attempt to install ``psycopg2`` or a compatible SQLite
+driver at runtime if they are missing.
+
 ## Installation
 
 Install the project in editable mode so the ``zmigrate`` module is

@@ -1,6 +1,23 @@
 """Database driver implementations."""
 
 from typing import Any, Iterable, List
+import importlib
+import subprocess
+import sys
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def ensure_package(module: str, package: str | None = None):
+    """Import ``module`` installing ``package`` via pip if needed."""
+    try:  # pragma: no cover - normal case
+        return importlib.import_module(module)
+    except ModuleNotFoundError:
+        pkg = package or module
+        logger.info("Installing missing dependency %s", pkg)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
+        return importlib.import_module(module)
 
 
 class Driver:
@@ -16,7 +33,7 @@ class Driver:
 
 class Postgres(Driver):
     def __init__(self, args: Any) -> None:
-        import psycopg2
+        psycopg2 = ensure_package("psycopg2", "psycopg2-binary")
 
         self.conn = psycopg2.connect(host=args.host, user=args.user, password=args.password)
         self.conn.set_session(autocommit=True)
@@ -82,7 +99,7 @@ class Postgres(Driver):
 
 class SQLite3(Driver):
     def __init__(self, args: Any) -> None:
-        import sqlite3
+        sqlite3 = ensure_package("sqlite3", "pysqlite3-binary")
 
         self.conn = sqlite3.connect(args.database)
 

@@ -102,3 +102,23 @@ def test_invalid_direction():
     import pytest
     with pytest.raises(SystemExit):
         zmigrate.parse_args(["--direction", "sideways"])
+
+
+def test_auto_install(monkeypatch):
+    calls = []
+
+    def fake_import(name):
+        if name == "missing" and not calls:
+            raise ModuleNotFoundError
+        return object()
+
+    def fake_check_call(cmd, **kwargs):
+        calls.append(cmd)
+
+    monkeypatch.setattr("importlib.import_module", fake_import)
+    monkeypatch.setattr("subprocess.check_call", fake_check_call)
+
+    from zmigrate.drivers import ensure_package
+
+    mod = ensure_package("missing", "missing-package")
+    assert calls and mod is not None
