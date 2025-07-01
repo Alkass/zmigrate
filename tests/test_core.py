@@ -80,3 +80,13 @@ def test_sqlite_migration(tmp_path):
     assert tables == {"migrations", "sqlite_sequence"}
     conn.close()
 
+
+def test_log_level_env(monkeypatch):
+    monkeypatch.setenv("ZMIGRATE_LOG_LEVEL", "DEBUG")
+    import importlib
+    import zmigrate.__main__ as zm
+
+    importlib.reload(zm)
+    import logging
+    assert zm.level == logging.DEBUG
+
