@@ -1,32 +1,37 @@
+"""Command line interface for ``zmigrate``."""
+
 from argparse import ArgumentParser
 from os import listdir
-from os.path import isfile, isdir
-from zmigrate.config import load as load_config
-from zmigrate.range import Range
+from os.path import isdir, isfile
+from typing import Iterable, Optional
+
+from zmigrate.config import Config, load as load_config
 from zmigrate.dir import Dir
 from zmigrate.drivers import SUPPORTED_DRIVERS
+from zmigrate.range import Range
 
-def str_to_bool(v):
+def str_to_bool(v: str | bool) -> bool:
     if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'y'):
+        return v
+    if v.lower() in ("yes", "y"):
         return True
-    elif v.lower() in ('no', 'n'):
+    if v.lower() in ("no", "n"):
         return False
-    raise Exception('Invalid value: %s' % v)
+    raise Exception(f"Invalid value: {v}")
 
-def file_validator(value):
+def file_validator(value: str) -> str:
     if isfile(value):
         return value
-    raise Exception("%s doesn't exist" % value)
+    raise Exception(f"{value} doesn't exist")
 
-def dir_validator(value):
+def dir_validator(value: str) -> str:
     if isdir(value):
         return value
-    raise Exception("%s isn't a valid directory path" % value)
+    raise Exception(f"{value} isn't a valid directory path")
 
-def main():
-    # Default config file name is config.json, so it needs not be specified in our case.
+def parse_args(argv: Optional[Iterable[str]] = None) -> Config:
+    """Return parsed CLI arguments as a :class:`~zmigrate.config.Config`."""
+
     cfg = load_config()
     parser = ArgumentParser()
     parser.add_argument(
@@ -93,15 +98,22 @@ def main():
         default=Range(),
         type=Range
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
+
+def main(argv: Optional[Iterable[str]] = None) -> None:
+    args = parse_args(argv)
 
     if args.range.first and args.range.last:
-        if args.direction == 'up' and args.range.last.toInt() < args.range.first.toInt():
-            raise Exception('Invalid range: %s > %s' % (args.range.first, args.range.last))
-        if args.direction == 'down' and args.range.first.toInt() < args.range.last.toInt():
-            raise Exception('Invalid range: %s < %s' % (args.range.first, args.range.last))
+        if args.direction == "up" and args.range.last.toInt() < args.range.first.toInt():
+            raise Exception(f"Invalid range: {args.range.first} > {args.range.last}")
+        if args.direction == "down" and args.range.first.toInt() < args.range.last.toInt():
+            raise Exception(f"Invalid range: {args.range.first} < {args.range.last}")
 
-    dirs = sorted([Dir(dir) for dir in listdir(args.migration_dir)], key=lambda x: x.toInt(), reverse=args.direction == 'down')
+    dirs = sorted(
+        [Dir(d) for d in listdir(args.migration_dir)],
+        key=lambda x: x.toInt(),
+        reverse=args.direction == "down",
+    )
     migrate(args, dirs)
 
 def upgrade(args, dir, db):
@@ -185,3 +197,4 @@ def migrate(args, dirs):
             upgrade(args, dir, db)
         else:
             downgrade(args, dir, db)
+

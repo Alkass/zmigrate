@@ -1,29 +1,30 @@
+"""Configuration loader for :mod:`zmigrate`."""
+
+from dataclasses import dataclass
 from json import loads
 from os.path import isfile
+from typing import Any, Dict
 
-def load(cfg_path = 'config.json'):
-	# Initiate an empty config dictionary in case a config file isn't present
-	cfg = {}
 
-	if isfile(cfg_path):
-		# Load data in JSON form.
-		# TODO: try..catch with an informative exception
-		cfg = loads(open(cfg_path).read())
+@dataclass
+class Config:
+    direction: str = "up"
+    seed: str = "no"
+    skip_missing: str = "no"
+    migration_dir: str = "migration"
+    driver: str = "pg"
+    host: str = "localhost"
+    user: str = "postgres"
+    database: str = "postgres"
+    password: str = ""
 
-	# Set defaults
-	# NOTE: Current configuration assumes postgres (pg) to be the default behavior.
-	# This behavior is subject to change as we turn zmigrate into a generic tool in
-	# the future.
-	cfg['direction'] = cfg.get('direction', 'up')
-	cfg['seed'] = cfg.get('seed', 'no')
-	cfg['skip_missing'] = cfg.get('skip_missing', 'no')
-	cfg['migration_dir'] = cfg.get('migration_dir', 'migration')
-	cfg['driver'] = cfg.get('driver', 'pg') # This is subject to change in the future
-	cfg['host'] = cfg.get('host', 'localhost')
-	cfg['user'] = cfg.get('user', 'postgres') # This is subject to change in the future
-	cfg['database'] = cfg.get('database', 'postgres') # This is subject to change in the future 
-	cfg['password'] = cfg.get('password', '')
 
-	# Turn cfg into a class allowing us to reference all the field via the dot operator,
-	# e.g.: cfg.logs instead of cfg['logs']
-	return type('', (), cfg)
+def load(cfg_path: str = "config.json") -> Config:
+    """Load configuration from ``cfg_path`` if it exists."""
+
+    data: Dict[str, Any] = {}
+    if isfile(cfg_path):
+        data = loads(open(cfg_path).read())
+
+    return Config(**data)
+

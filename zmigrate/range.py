@@ -1,16 +1,28 @@
+"""Handle ranges of migration revisions."""
+
+from dataclasses import dataclass
+from typing import Optional
+
 from zmigrate.dir import Dir
 
+
+@dataclass
 class Range:
-    first, last = None, None
-    def __init__(self, raw=None):
+    first: Optional[Dir] = None
+    last: Optional[Dir] = None
+
+    def __init__(self, raw: Optional[str] = None) -> None:
         if not raw:
             return
-        if raw.count('^') is not 1:
-            raise Exception('Invalid range format: %s' % raw)
-        tokens = raw.split('^')
-        self.first = self.parse(tokens[0])
-        self.last = self.parse(tokens[1])
-    def parse(self, rawDir):
-        if not rawDir or rawDir == '':
+        if raw.count("^") != 1:
+            raise Exception(f"Invalid range format: {raw}")
+        start, end = raw.split("^")
+        self.first = self.parse(start)
+        self.last = self.parse(end)
+
+    @staticmethod
+    def parse(rawDir: str) -> Optional[Dir]:
+        if not rawDir:
             return None
         return Dir(rawDir)
+
