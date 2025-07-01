@@ -4,11 +4,14 @@ from argparse import ArgumentParser
 from os import listdir
 from os.path import isdir, isfile
 from typing import Iterable, Optional
+import logging
 
 from zmigrate.config import Config, load as load_config
 from zmigrate.dir import Dir
 from zmigrate.drivers import SUPPORTED_DRIVERS
 from zmigrate.range import Range
+
+logger = logging.getLogger(__name__)
 
 def str_to_bool(v: str | bool) -> bool:
     if isinstance(v, bool):
@@ -128,17 +131,17 @@ def upgrade(args, dir, db):
 
     migInfo = db.get_rows('migrations', '*', 1, revision="'%s'" % dir)
     if len(migInfo) > 0:
-        print('%s is already migrated. Skipping' % dir)
+        logger.info("%s is already migrated. Skipping", dir)
         return
 
-    print('Migrating', dir)
+    logger.info("Migrating %s", dir)
     readmePath = '%s/%s/readme' % (args.migration_dir, dir)
     if isfile(readmePath):
         for line in open(readmePath).read().strip().split('\n'):
             line = line.strip()
             if not len(line):
                 continue
-            print('|-', line)
+            logger.info("|- %s", line)
 
     for script in scripts:
         scriptPath = '%s/%s/%s' % (args.migration_dir, dir, script)
@@ -146,7 +149,7 @@ def upgrade(args, dir, db):
             if args.skip_missing:
                 continue
             raise Exception('Missing %s' % scriptPath)
-        print('Executing', scriptPath)
+        logger.info("Executing %s", scriptPath)
         db.execute_script(open(scriptPath).read().strip())
     db.insert_row('migrations', revision="'%s'" % dir)
 
@@ -158,16 +161,16 @@ def downgrade(args, dir, db):
 
     migInfo = db.get_rows('migrations', '*', 1, revision="'%s'" % dir)
     if not len(migInfo):
-        print('%s not migrated. No downgrading needed' % dir)
+        logger.info("%s not migrated. No downgrading needed", dir)
         return
 
-    print('Downgrading', dir)
+    logger.info("Downgrading %s", dir)
     scriptPath = '%s/%s/down.sql' % (args.migration_dir, dir)
     if not isfile(scriptPath):
         if not args.skip_missing:
             raise Exception('Missing %s' % scriptPath)
     else:
-        print('Executing', scriptPath)
+        logger.info("Executing %s", scriptPath)
         db.execute_script(open(scriptPath).read().strip())
     db.delete_row("migrations", "revision = '%s'" % dir)
 
