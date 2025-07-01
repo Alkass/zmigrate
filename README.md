@@ -24,16 +24,20 @@ available for your scripts::
 
 Migrations are placed in a ``migration`` directory with sub-directories
 named using semantic versioning. Each directory can contain ``up.sql``,
-``down.sql`` and an optional ``seed.sql`` script::
+``down.sql`` and an optional ``seed.sql`` script.  A plain text file
+named ``readme`` may also be added to describe the migration; each line
+will be printed when that migration is applied::
 
     migration/
     ├── 0.0.1/
     │   ├── up.sql
     │   ├── down.sql
-    │   └── seed.sql
+    │   ├── seed.sql
+    │   └── readme
     └── 0.0.2/
         ├── up.sql
-        └── down.sql
+        ├── down.sql
+        └── readme
 
 ## Running migrations
 
