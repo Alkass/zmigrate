@@ -90,3 +90,15 @@ def test_log_level_env(monkeypatch):
     import logging
     assert zm.level == logging.DEBUG
 
+
+
+def test_direction_literal():
+    from typing import get_origin, get_args, Literal
+    assert get_origin(Config.__annotations__["direction"]) is Literal
+    assert get_args(Config.__annotations__["direction"]) == ("up", "down")
+
+
+def test_invalid_direction():
+    import pytest
+    with pytest.raises(SystemExit):
+        zmigrate.parse_args(["--direction", "sideways"])

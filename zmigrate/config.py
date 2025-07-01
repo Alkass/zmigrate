@@ -3,12 +3,12 @@
 from dataclasses import dataclass
 from json import loads
 from os.path import isfile
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 
 
 @dataclass
 class Config:
-    direction: str = "up"
+    direction: Literal["up", "down"] = "up"
     seed: str = "no"
     skip_missing: str = "no"
     migration_dir: str = "migration"
