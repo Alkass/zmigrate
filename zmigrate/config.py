@@ -24,7 +24,8 @@ def load(cfg_path: str = "config.json") -> Config:
 
     data: Dict[str, Any] = {}
     if isfile(cfg_path):
-        data = loads(open(cfg_path).read())
+        with open(cfg_path, "r", encoding="utf-8") as fh:
+            data = loads(fh.read())
 
     return Config(**data)
 

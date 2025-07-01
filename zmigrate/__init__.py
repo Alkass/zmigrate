@@ -137,11 +137,12 @@ def upgrade(args, dir, db):
     logger.info("Migrating %s", dir)
     readmePath = '%s/%s/readme' % (args.migration_dir, dir)
     if isfile(readmePath):
-        for line in open(readmePath).read().strip().split('\n'):
-            line = line.strip()
-            if not len(line):
-                continue
-            logger.info("|- %s", line)
+        with open(readmePath, "r", encoding="utf-8") as fh:
+            for raw_line in fh:
+                line = raw_line.strip()
+                if not line:
+                    continue
+                logger.info("|- %s", line)
 
     for script in scripts:
         scriptPath = '%s/%s/%s' % (args.migration_dir, dir, script)
@@ -150,7 +151,8 @@ def upgrade(args, dir, db):
                 continue
             raise Exception('Missing %s' % scriptPath)
         logger.info("Executing %s", scriptPath)
-        db.execute_script(open(scriptPath).read().strip())
+        with open(scriptPath, "r", encoding="utf-8") as fh:
+            db.execute_script(fh.read().strip())
     db.insert_row('migrations', revision="'%s'" % dir)
 
 def downgrade(args, dir, db):
@@ -171,33 +173,33 @@ def downgrade(args, dir, db):
             raise Exception('Missing %s' % scriptPath)
     else:
         logger.info("Executing %s", scriptPath)
-        db.execute_script(open(scriptPath).read().strip())
+        with open(scriptPath, "r", encoding="utf-8") as fh:
+            db.execute_script(fh.read().strip())
     db.delete_row("migrations", "revision = '%s'" % dir)
 
 def migrate(args, dirs):
-    db = SUPPORTED_DRIVERS[args.driver](args)
+    with SUPPORTED_DRIVERS[args.driver](args) as db:
+        # We create the table without columns for backwawrd-compatibility purposes.
+        # This allows us to easily add new columns and drop existing columns without
+        # issues in the future.
+        columns = [
+            {
+                'name': 'id',
+                'type': 'SERIAL',
+                'constraints': 'PRIMARY KEY'
+            },
+            {
+                'name': 'revision',
+                'type': 'TEXT',
+                'constraints': 'NOT NULL UNIQUE',
+            }
 
-    # We create the table without columns for backwawrd-compatibility purposes.
-    # This allows us to easily add new columns and drop existing columns without
-    # issues in the future.
-    columns = [
-        {
-            'name': 'id',
-            'type': 'SERIAL',
-            'constraints': 'PRIMARY KEY'
-        },
-        {
-            'name': 'revision',
-            'type': 'TEXT',
-            'constraints': 'NOT NULL UNIQUE',
-        }
+        ]
+        db.create_table('migrations', columns)
 
-    ]
-    db.create_table('migrations', columns)
-
-    for dir in dirs:
-        if args.direction == 'up':
-            upgrade(args, dir, db)
-        else:
-            downgrade(args, dir, db)
+        for dir in dirs:
+            if args.direction == 'up':
+                upgrade(args, dir, db)
+            else:
+                downgrade(args, dir, db)
 

@@ -4,7 +4,14 @@ from typing import Any, Iterable, List
 
 
 class Driver:
-    pass
+    def __enter__(self) -> "Driver":  # pragma: no cover - trivial
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - cleanup
+        self.close()
+
+    def close(self) -> None:  # pragma: no cover - overridden
+        pass
 
 
 class Postgres(Driver):
@@ -24,7 +31,7 @@ class Postgres(Driver):
             host=args.host, user=args.user, password=args.password, database=args.database
         )
 
-    def __del__(self) -> None:  # pragma: no cover - cleanup
+    def close(self) -> None:  # pragma: no cover - cleanup
         self.conn.close()
 
     def execute(self, statements: str, readRows: bool = False) -> List[Iterable[Any]]:
@@ -79,7 +86,7 @@ class SQLite3(Driver):
 
         self.conn = sqlite3.connect(args.database)
 
-    def __del__(self) -> None:  # pragma: no cover - cleanup
+    def close(self) -> None:  # pragma: no cover - cleanup
         self.conn.close()
 
     def execute(self, statements: str, readRows: bool = False):
