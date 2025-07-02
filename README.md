@@ -15,10 +15,14 @@ driver at runtime if they are missing.
 
 ## Installation
 
-Install the project in editable mode so the ``zmigrate`` module is
-available for your scripts::
+Install ``zmigrate`` via ``pip`` so the ``zmigrate`` command becomes
+available system-wide.  You can install from a local checkout::
 
-    pip install -e .
+    pip install .
+
+Or install from PyPI when released::
+
+    pip install zmigrate
 
 ## Directory layout
 
@@ -41,10 +45,11 @@ will be printed when that migration is applied::
 
 ## Running migrations
 
-Use ``python -m zmigrate`` to execute the CLI. The following example
-creates a SQLite database and seeds it from the migration directory::
+Once installed you can use the ``zmigrate`` command (or ``python -m zmigrate``)
+to run migrations. The following example creates a SQLite database and seeds it
+from the migration directory::
 
-    python -m zmigrate \
+    zmigrate \
         --driver sqlite3 \
         --database my.db \
         --migration-dir migration \
@@ -52,7 +57,7 @@ creates a SQLite database and seeds it from the migration directory::
 
 Downgrading to a specific revision range is also supported::
 
-    python -m zmigrate -d down --range 0.0.2^0.0.1 \
+    zmigrate -d down --range 0.0.2^0.0.1 \
         --driver sqlite3 --database my.db
 
 Settings can be provided via ``config.json``. Any command-line argument
