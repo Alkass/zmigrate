@@ -20,6 +20,12 @@ available system-wide.  You can install from a local checkout::
 
     pip install .
 
+To run the test suite, install the optional development
+dependencies and invoke ``pytest``::
+
+    pip install -e .[dev]
+    pytest -q
+
 Or install from PyPI when released::
 
     pip install zmigrate
