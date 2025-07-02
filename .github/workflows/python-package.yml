@@ -26,4 +26,4 @@ jobs:
         python -m pip install -e .
     - name: Run tests
       run: |
-        cd tests; ./run
+        pytest -q

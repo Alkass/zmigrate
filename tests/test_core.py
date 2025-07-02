@@ -80,6 +80,20 @@ def test_sqlite_migration(tmp_path):
     assert tables == {"migrations", "sqlite_sequence"}
     conn.close()
 
+    run_cli([
+        "--migration-dir",
+        str(mig_dir),
+        "--driver",
+        "sqlite3",
+        "--database",
+        str(db_path),
+    ])
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM migrations")
+    assert cur.fetchone()[0] == 2
+    conn.close()
+
 
 def test_log_level_env(monkeypatch):
     monkeypatch.setenv("ZMIGRATE_LOG_LEVEL", "DEBUG")
