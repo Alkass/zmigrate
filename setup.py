@@ -18,7 +18,12 @@ setup(
         keywords='database migration',
         packages=[__PROG_NAME__],
         install_requires=open('requirements.txt').read().split('\n'),
+        extras_require={
+            'dev': open('requirements-dev.txt').read().split('\n'),
+        },
         entry_points={
-            'console_scripts': ['{prog} = {prog}:main'.format(prog=__PROG_NAME__)],
+            'console_scripts': [
+                '{prog} = {prog}.__main__:main'.format(prog=__PROG_NAME__)
+            ],
         }
 )

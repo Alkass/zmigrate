@@ -1,32 +1,42 @@
+"""Command line interface for ``zmigrate``."""
+
 from argparse import ArgumentParser
 from os import listdir
-from os.path import isfile, isdir
-from zmigrate.config import load as load_config
-from zmigrate.range import Range
+from os.path import isdir, isfile
+from typing import Iterable, Optional
+import logging
+
+from zmigrate.config import Config, load as load_config
 from zmigrate.dir import Dir
 from zmigrate.drivers import SUPPORTED_DRIVERS
+from zmigrate.range import Range
 
-def str_to_bool(v):
+logger = logging.getLogger(__name__)
+
+from typing import Union  # moved here to avoid circular import
+
+def str_to_bool(v: Union[str, bool]) -> bool:
     if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'y'):
+        return v
+    if v.lower() in ("yes", "y"):
         return True
-    elif v.lower() in ('no', 'n'):
+    if v.lower() in ("no", "n"):
         return False
-    raise Exception('Invalid value: %s' % v)
+    raise Exception(f"Invalid value: {v}")
 
-def file_validator(value):
+def file_validator(value: str) -> str:
     if isfile(value):
         return value
-    raise Exception("%s doesn't exist" % value)
+    raise Exception(f"{value} doesn't exist")
 
-def dir_validator(value):
+def dir_validator(value: str) -> str:
     if isdir(value):
         return value
-    raise Exception("%s isn't a valid directory path" % value)
+    raise Exception(f"{value} isn't a valid directory path")
 
-def main():
-    # Default config file name is config.json, so it needs not be specified in our case.
+def parse_args(argv: Optional[Iterable[str]] = None) -> Config:
+    """Return parsed CLI arguments as a :class:`~zmigrate.config.Config`."""
+
     cfg = load_config()
     parser = ArgumentParser()
     parser.add_argument(
@@ -93,15 +103,22 @@ def main():
         default=Range(),
         type=Range
     )
-    args = parser.parse_args()
+    return parser.parse_args(argv)
+
+def main(argv: Optional[Iterable[str]] = None) -> None:
+    args = parse_args(argv)
 
     if args.range.first and args.range.last:
-        if args.direction == 'up' and args.range.last.toInt() < args.range.first.toInt():
-            raise Exception('Invalid range: %s > %s' % (args.range.first, args.range.last))
-        if args.direction == 'down' and args.range.first.toInt() < args.range.last.toInt():
-            raise Exception('Invalid range: %s < %s' % (args.range.first, args.range.last))
+        if args.direction == "up" and args.range.last.toInt() < args.range.first.toInt():
+            raise Exception(f"Invalid range: {args.range.first} > {args.range.last}")
+        if args.direction == "down" and args.range.first.toInt() < args.range.last.toInt():
+            raise Exception(f"Invalid range: {args.range.first} < {args.range.last}")
 
-    dirs = sorted([Dir(dir) for dir in listdir(args.migration_dir)], key=lambda x: x.toInt(), reverse=args.direction == 'down')
+    dirs = sorted(
+        [Dir(d) for d in listdir(args.migration_dir)],
+        key=lambda x: x.toInt(),
+        reverse=args.direction == "down",
+    )
     migrate(args, dirs)
 
 def upgrade(args, dir, db):
@@ -116,17 +133,18 @@ def upgrade(args, dir, db):
 
     migInfo = db.get_rows('migrations', '*', 1, revision="'%s'" % dir)
     if len(migInfo) > 0:
-        print('%s is already migrated. Skipping' % dir)
+        logger.info("%s is already migrated. Skipping", dir)
         return
 
-    print('Migrating', dir)
+    logger.info("Migrating %s", dir)
     readmePath = '%s/%s/readme' % (args.migration_dir, dir)
     if isfile(readmePath):
-        for line in open(readmePath).read().strip().split('\n'):
-            line = line.strip()
-            if not len(line):
-                continue
-            print('|-', line)
+        with open(readmePath, "r", encoding="utf-8") as fh:
+            for raw_line in fh:
+                line = raw_line.strip()
+                if not line:
+                    continue
+                logger.info("|- %s", line)
 
     for script in scripts:
         scriptPath = '%s/%s/%s' % (args.migration_dir, dir, script)
@@ -134,8 +152,9 @@ def upgrade(args, dir, db):
             if args.skip_missing:
                 continue
             raise Exception('Missing %s' % scriptPath)
-        print('Executing', scriptPath)
-        db.execute_script(open(scriptPath).read().strip())
+        logger.info("Executing %s", scriptPath)
+        with open(scriptPath, "r", encoding="utf-8") as fh:
+            db.execute_script(fh.read().strip())
     db.insert_row('migrations', revision="'%s'" % dir)
 
 def downgrade(args, dir, db):
@@ -146,42 +165,43 @@ def downgrade(args, dir, db):
 
     migInfo = db.get_rows('migrations', '*', 1, revision="'%s'" % dir)
     if not len(migInfo):
-        print('%s not migrated. No downgrading needed' % dir)
+        logger.info("%s not migrated. No downgrading needed", dir)
         return
 
-    print('Downgrading', dir)
+    logger.info("Downgrading %s", dir)
     scriptPath = '%s/%s/down.sql' % (args.migration_dir, dir)
     if not isfile(scriptPath):
         if not args.skip_missing:
             raise Exception('Missing %s' % scriptPath)
     else:
-        print('Executing', scriptPath)
-        db.execute_script(open(scriptPath).read().strip())
+        logger.info("Executing %s", scriptPath)
+        with open(scriptPath, "r", encoding="utf-8") as fh:
+            db.execute_script(fh.read().strip())
     db.delete_row("migrations", "revision = '%s'" % dir)
 
 def migrate(args, dirs):
-    db = SUPPORTED_DRIVERS[args.driver](args)
+    with SUPPORTED_DRIVERS[args.driver](args) as db:
+        # We create the table without columns for backwawrd-compatibility purposes.
+        # This allows us to easily add new columns and drop existing columns without
+        # issues in the future.
+        columns = [
+            {
+                'name': 'id',
+                'type': 'SERIAL',
+                'constraints': 'PRIMARY KEY'
+            },
+            {
+                'name': 'revision',
+                'type': 'TEXT',
+                'constraints': 'NOT NULL UNIQUE',
+            }
 
-    # We create the table without columns for backwawrd-compatibility purposes.
-    # This allows us to easily add new columns and drop existing columns without
-    # issues in the future.
-    columns = [
-        {
-            'name': 'id',
-            'type': 'SERIAL',
-            'constraints': 'PRIMARY KEY'
-        },
-        {
-            'name': 'revision',
-            'type': 'TEXT',
-            'constraints': 'NOT NULL UNIQUE',
-        }
+        ]
+        db.create_table('migrations', columns)
 
-    ]
-    db.create_table('migrations', columns)
+        for dir in dirs:
+            if args.direction == 'up':
+                upgrade(args, dir, db)
+            else:
+                downgrade(args, dir, db)
 
-    for dir in dirs:
-        if args.direction == 'up':
-            upgrade(args, dir, db)
-        else:
-            downgrade(args, dir, db)
